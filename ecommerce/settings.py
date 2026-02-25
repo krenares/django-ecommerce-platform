@@ -124,12 +124,15 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default="sqlite:///db.sqlite3",
         conn_max_age=600,
-        ssl_require=not DEBUG,
+        ssl_require=False,  # IMPORTANT: don't force SSL for sqlite
     )
 }
 
+# If you want SSL for Postgres in production, do it safely:
+if os.getenv("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
+    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
 
 # ---------------------------
 # Password validation
