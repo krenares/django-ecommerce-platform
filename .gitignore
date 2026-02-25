@@ -6,3 +6,4 @@ venv/
 media/
 .DS_Store
 staticfiles/
+replacements.txt
