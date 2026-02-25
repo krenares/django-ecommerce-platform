@@ -107,7 +107,7 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("DB_NAME", str(BASE_DIR / "db.sqlite3")),
+        "NAME": os.environ.get("DB_NAME", "/var/data/db.sqlite3"),
         "USER": os.environ.get("DB_USER", ""),
         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
         "HOST": os.environ.get("DB_HOST", ""),
@@ -115,8 +115,7 @@ DATABASES = {
     }
 }
 
-# ---------------------------
-# Password validation
+Password validation
 # ---------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
