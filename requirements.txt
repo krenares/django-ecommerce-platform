@@ -8,7 +8,7 @@ certifi==2023.7.22
 cffi==1.15.1
 charset-normalizer==3.4.1
 click==8.1.8
-cryptography @ file:///private/tmp/python-cryptography-20230801-6150-1yymd7x/cryptography-41.0.3
+cryptography==41.0.3
 distlib==0.3.7
 dj-database-url==3.1.2
 Django==5.2.11
@@ -58,7 +58,7 @@ pydantic_core==2.27.2
 pyparsing==3.2.1
 python-dotenv==1.0.1
 python-slugify==8.0.4
-PyYAML @ file:///private/tmp/pyyaml-20230717-5976-12npxbt/PyYAML-6.0.1
+PyYAML==6.0.1
 redis==5.0.1
 requests==2.32.3
 requests-oauthlib==2.0.0
