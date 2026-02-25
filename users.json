@@ -1,0 +1,20 @@
+[
+{
+  "model": "auth.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$390000$AlAeL1sVfuZUJzxfUdICKz$tg7w8EeMNIzSrgNq7RX3YYV8/XuiOPFJ/OLEeNaVDTE=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "krenki",
+    "first_name": "",
+    "last_name": "",
+    "email": "krenaresyla13@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-02-25T07:03:02.486Z",
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]
