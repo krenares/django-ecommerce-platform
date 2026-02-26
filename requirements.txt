@@ -2,13 +2,16 @@ asgiref==3.11.1
 beautifulsoup4==4.13.4
 certifi==2023.7.22
 charset-normalizer==3.4.1
+cloudinary==1.44.1
 crispy-bootstrap5==2025.6
 dj-database-url==3.1.2
 Django==5.2.11
 django-admin-interface==0.32.0
+django-cloudinary-storage==0.3.0
 django-colorfield==0.14.0
 django-crispy-forms==2.5
 django-mathfilters==1.0.0
+django-utils-six==2.0
 gunicorn==21.2.0
 idna==3.10
 packaging==26.0
