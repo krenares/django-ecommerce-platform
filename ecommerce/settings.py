@@ -1,44 +1,51 @@
 """
 Django settings for ecommerce project.
 
-Production-ready configuration for Render + Neon Postgres.
-Falls back to SQLite for local development.
+Production-ready configuration for Render.
+Uses DATABASE_URL when present, otherwise SQLite locally.
 """
 
 import os
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
+}
 from pathlib import Path
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # ---------------------------
 # Core security & environment
 # ---------------------------
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "dev-only-unsafe-secret-change-me"
-)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-unsafe-secret-change-me")
 
-DEBUG = os.environ.get(
-    "DJANGO_DEBUG",
-    "False"
-).lower() in ("1", "true", "yes")
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.environ.get(
-        "DJANGO_ALLOWED_HOSTS",
-        "127.0.0.1,localhost"
-    ).split(",")
+    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if h.strip()
 ]
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Helpful if you forget to set allowed hosts on Render
+# (optional but safe)
+if not DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["*"]
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
+# In production, these are good defaults on Render
+if not DEBUG:
+    SECURE_SSL_REDIRECT = False  # Render handles TLS; keep False unless you know you need it
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # ---------------------------
 # Applications
@@ -65,10 +72,13 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "mathfilters",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-
+# ✅ Use ONLY bootstrap5 (you had both bootstrap4 and bootstrap5 set)
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # ---------------------------
 # Middleware
@@ -76,7 +86,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -87,9 +96,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
 ROOT_URLCONF = "ecommerce.urls"
-
 
 # ---------------------------
 # Templates
@@ -113,130 +120,78 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = "ecommerce.wsgi.application"
-
 
 # ---------------------------
 # Database
 # ---------------------------
-# Uses Neon Postgres in production via DATABASE_URL
-# Falls back to SQLite locally
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=False,  # IMPORTANT: don't force SSL for sqlite
     )
 }
 
-# If you want SSL for Postgres in production, do it safely:
-if os.getenv("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
-    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
+# If Postgres, enforce SSL safely
+if DATABASE_URL.startswith(("postgres://", "postgresql://")):
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"].update({"sslmode": "require"})
 
 # ---------------------------
 # Password validation
 # ---------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME":
-        "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
-    {
-        "NAME":
-        "django.contrib.auth.password_validation.MinimumLengthValidator"
-    },
-    {
-        "NAME":
-        "django.contrib.auth.password_validation.CommonPasswordValidator"
-    },
-    {
-        "NAME":
-        "django.contrib.auth.password_validation.NumericPasswordValidator"
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
 
 # ---------------------------
 # Internationalization
 # ---------------------------
 
 LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = os.environ.get(
-    "DJANGO_TIME_ZONE",
-    "UTC"
-)
-
+TIME_ZONE = os.environ.get("DJANGO_TIME_ZONE", "UTC")
 USE_I18N = True
 USE_TZ = True
-
 
 # ---------------------------
 # Static & Media
 # ---------------------------
 
 STATIC_URL = "/static/"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static"
-]
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = (
-    "whitenoise.storage.CompressedManifestStaticFilesStorage"
-)
+# Only include STATICFILES_DIRS if the folder exists
+STATICFILES_DIRS = []
+_static_dir = BASE_DIR / "static"
+if _static_dir.exists():
+    STATICFILES_DIRS.append(_static_dir)
+
+# WhiteNoise storage
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
-
 MEDIA_ROOT = BASE_DIR / "media"
-
 
 # ---------------------------
 # Email
 # ---------------------------
 
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend"
-)
-
-EMAIL_HOST = os.environ.get(
-    "EMAIL_HOST",
-    "smtp.gmail.com"
-)
-
-EMAIL_PORT = int(
-    os.environ.get(
-        "EMAIL_PORT",
-        "587"
-    )
-)
-
-EMAIL_USE_TLS = os.environ.get(
-    "EMAIL_USE_TLS",
-    "True"
-).lower() in ("1", "true", "yes")
-
-EMAIL_HOST_USER = os.environ.get(
-    "EMAIL_HOST_USER",
-    ""
-)
-
-EMAIL_HOST_PASSWORD = os.environ.get(
-    "EMAIL_HOST_PASSWORD",
-    ""
-)
-
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # ---------------------------
 # Default primary key field type
 # ---------------------------
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
